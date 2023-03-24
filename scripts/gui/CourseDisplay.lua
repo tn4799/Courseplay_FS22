@@ -38,7 +38,7 @@ function SimpleSign:isNormalSign()
 end
 
 function SimpleSign:getNode()
-	return self.node	
+	return self.node
 end
 
 function SimpleSign:getLineNode()
@@ -117,7 +117,7 @@ function SimpleSign:setWaypointData(wp, np)
 		if dx == dx and dz == dz then
 			xRot = -math.sin((ny-y)/dist)
 			yRot = MathUtil.getYRotationFromDirection(dx, dz)
-		end	
+		end
 		self:rotate(xRot, yRot)
 		self:scaleLine(dist)
 	end
@@ -141,7 +141,7 @@ function SignPrototypes:getPrototypes()
 end
 
 function SignPrototypes:delete()
-	for i, prototype in pairs(self.protoTypes) do 
+	for i, prototype in pairs(self.protoTypes) do
 		prototype:delete()
 	end
 end
@@ -182,7 +182,7 @@ function SimpleCourseDisplay:setNormalSign(i)
 	--- Selects the stop waypoint sign.
 	if self.signs[i] == nil then
 		self.signs[i] = self:cloneSign(self.protoTypes.NORMAL)
-	elseif not self.signs[i]:isNormalSign() then 
+	elseif not self.signs[i]:isNormalSign() then
 		self:deleteSign(self.signs[i])
 		self.signs[i] = self:cloneSign(self.protoTypes.NORMAL)
 	end
@@ -193,11 +193,11 @@ function SimpleCourseDisplay:updateWaypoint(i)
 	local wp = self.course.waypoints[i]
 	local np = self.course.waypoints[i + 1]
 	local pp = self.course.waypoints[i - 1]
-	if i == 1 then 
+	if i == 1 then
 		--- Selects the start sign.
 		if self.signs[i] == nil then
 			self.signs[i] = self:cloneSign(self.protoTypes.START)
-		elseif not self.signs[i]:isStartSign() then 
+		elseif not self.signs[i]:isStartSign() then
 			self:deleteSign(self.signs[i])
 			self.signs[i] = self:cloneSign(self.protoTypes.START)
 		end
@@ -206,12 +206,12 @@ function SimpleCourseDisplay:updateWaypoint(i)
 		--- Selects the stop waypoint sign.
 		if self.signs[i] == nil then
 			self.signs[i] = self:cloneSign(self.protoTypes.STOP)
-		elseif not self.signs[i]:isStopSign() then 
+		elseif not self.signs[i]:isStopSign() then
 			self:deleteSign(self.signs[i])
 			self.signs[i] = self:cloneSign(self.protoTypes.STOP)
 		end
 		self.signs[i]:setWaypointData(pp, wp)
-	else 
+	else
 		--- Selects the normal waypoint sign.
 		self:setNormalSign(i)
 		self.signs[i]:setWaypointData(wp, np)
@@ -231,14 +231,14 @@ end
 function SimpleCourseDisplay:setCourse(course)
 	self.course = course
 	--- Removes signs that are not needed.
-	for i = #self.signs, course:getNumberOfWaypoints() + 1, -1 do 
+	for i = #self.signs, course:getNumberOfWaypoints() + 1, -1 do
 		self.signs[i]:delete()
 		table.remove(self.signs, i)
 	end
 	for i = 1, course:getNumberOfWaypoints() do
 		self:updateWaypoint(i)
 	end
-	
+
 end
 
 function SimpleCourseDisplay:clearCourse()
@@ -248,12 +248,12 @@ end
 
 --- Updates changes from ix or ix-1 onwards.
 function SimpleCourseDisplay:updateChanges(ix)
-	for i = #self.signs, self.course:getNumberOfWaypoints() + 1, -1 do 
+	for i = #self.signs, self.course:getNumberOfWaypoints() + 1, -1 do
 		self.signs[i]:delete()
 		table.remove(self.signs, i)
 	end
 	ix = ix or 1
-	if ix - 1 > 0 then 
+	if ix - 1 > 0 then
 		ix = ix - 1
 	end
 	for j = ix, self.course:getNumberOfWaypoints() do
@@ -263,7 +263,7 @@ end
 
 --- Updates changes between waypoints.
 function SimpleCourseDisplay:updateChangesBetween(firstIx, secondIx)
-	for i = #self.signs, self.course:getNumberOfWaypoints() + 1, -1 do 
+	for i = #self.signs, self.course:getNumberOfWaypoints() + 1, -1 do
 		self.signs[i]:delete()
 		table.remove(self.signs, i)
 	end
@@ -277,7 +277,7 @@ end
 function SimpleCourseDisplay:updateVisibility(visible, onlyStartStopVisible, onlyAroundCurrentWaypointVisible)
 	if self.course then
 		local numWp = self.course:getNumberOfWaypoints()
-		local currentWaypointIx = self.course:getCurrentWaypointIx()
+		local currentWaypointIx = MathUtil.round(self.course:getNormalizedCurrentWaypointIx() * self.course:getNumberOfWaypoints())
 		for j = 1, numWp do
 			if self.signs[j] then
 				local showWaypoint = false
@@ -297,7 +297,7 @@ function SimpleCourseDisplay:updateVisibility(visible, onlyStartStopVisible, onl
 end
 
 function SimpleCourseDisplay:deleteSigns()
-	for i, sign in pairs(self.signs) do 
+	for i, sign in pairs(self.signs) do
 		self:deleteSign(sign)
 	end
 	self.signs = {}
@@ -321,8 +321,8 @@ BufferedCourseDisplay.bufferMax = 10000
 function BufferedCourseDisplay:setNormalSign(i)
 	local function getNewSign()
 		local sign
-		if #BufferedCourseDisplay.buffer > 0 then 
-			sign = BufferedCourseDisplay.buffer[1] 
+		if #BufferedCourseDisplay.buffer > 0 then
+			sign = BufferedCourseDisplay.buffer[1]
 			table.remove(BufferedCourseDisplay.buffer, 1)
 			sign:setVisible(true)
 			sign:setParent(self.rootNode)
@@ -333,24 +333,24 @@ function BufferedCourseDisplay:setNormalSign(i)
 	end
 	if self.signs[i] == nil then
 		self.signs[i] = getNewSign()
-	elseif not self.signs[i]:isNormalSign() then 
+	elseif not self.signs[i]:isNormalSign() then
 		self.signs[i]:delete()
 		self.signs[i] = getNewSign()
 	end
 end
 
 function BufferedCourseDisplay:deleteSign(sign)
-	if sign:isNormalSign() and #BufferedCourseDisplay.buffer < self.bufferMax then 
+	if sign:isNormalSign() and #BufferedCourseDisplay.buffer < self.bufferMax then
 		sign:setVisible(false)
 		sign:setParent(getRootNode())
 		table.insert(BufferedCourseDisplay.buffer, sign)
-	else 
+	else
 		sign:delete()
 	end
 end
 
 function BufferedCourseDisplay.deleteBuffer()
-	for i, sign in pairs(BufferedCourseDisplay.buffer) do 
+	for i, sign in pairs(BufferedCourseDisplay.buffer) do
 		sign:delete()
 	end
 end
@@ -364,7 +364,7 @@ EditorCourseDisplay.COLORS = {
 	SELECTED    = {1, 0, 1, 1.000 },  -- red blue
 	NORMAL_LINE = {0, 1, 1, 1.000 },
 	HEADLAND_LINE = {1, 0, 1, 1.000 },
-	CONNECTING_LINE = {0, 0, 0, 0 } 
+	CONNECTING_LINE = {0, 0, 0, 0 }
 }
 EditorCourseDisplay.HEIGHT_OFFSET = 4.5
 
@@ -381,17 +381,17 @@ end
 
 function EditorCourseDisplay:updateWaypoint(i)
 	SimpleCourseDisplay.updateWaypoint(self, i)
-	if self.courseWrapper:isSelected(i) then 
+	if self.courseWrapper:isSelected(i) then
 		self.signs[i]:setColor(EditorCourseDisplay.COLORS.SELECTED)
 	end
-	if self.courseWrapper:isHovered(i) then 
+	if self.courseWrapper:isHovered(i) then
 		self.signs[i]:setColor(EditorCourseDisplay.COLORS.HOVERED)
 	end
 	self.signs[i]:setLineColor(EditorCourseDisplay.COLORS.NORMAL_LINE)
-	if self.courseWrapper:isHeadland(i) or self.courseWrapper:isOnRowNumber(i) then 
+	if self.courseWrapper:isHeadland(i) or self.courseWrapper:isOnRowNumber(i) then
 		self.signs[i]:setLineColor(EditorCourseDisplay.COLORS.HEADLAND_LINE)
 	end
-	if self.courseWrapper:isConnectingTrack(i) then 
+	if self.courseWrapper:isConnectingTrack(i) then
 		self.signs[i]:setLineColor(EditorCourseDisplay.COLORS.CONNECTING_LINE)
 	end
 	self.signs[i]:setBottomLineToGround()
