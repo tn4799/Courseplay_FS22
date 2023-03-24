@@ -334,6 +334,12 @@ function Course:getCurrentWaypointIx()
 	return self.currentWaypoint
 end
 
+-- Returns waypoint index as a normalized value in the range [0,1]
+-- This ensures that all treatment depending on the length of the course behaves the same
+function Course:getNormalizedCurrentWaypointIx()
+	return self.currentWaypoint/self:getNumberOfWaypoints()
+end
+
 function Course:setLastPassedWaypointIx(ix)
 	self.lastPassedWaypoint = ix
 end
@@ -1780,7 +1786,7 @@ function Course:saveToXml(courseXml, courseKey)
 	courseXml:setValue(courseKey  .. '#wasEdited', self.editedByCourseEditor)
 	--- For backward compatibility a flag is set to indicate, that the waypoints between rows are not saved.
 	--courseXml:setValue(courseKey  .. '#isCompressed',true)
-	for i,p in ipairs(self.waypoints) do 
+	for i,p in ipairs(self.waypoints) do
 		local key = string.format("%s%s(%d)",courseKey,Waypoint.xmlKey,i-1)
 		courseXml:setString(key,p:getXmlString())
 	end
@@ -1793,7 +1799,7 @@ function Course:writeStream(vehicle,streamId, connection)
 	streamWriteInt32(streamId, self.multiTools or 1)
 	streamWriteInt32(streamId, #self.waypoints or 0)
 	streamWriteBool(streamId, self.editedByCourseEditor)
-	for i,p in ipairs(self.waypoints) do 
+	for i,p in ipairs(self.waypoints) do
 		streamWriteString(streamId,p:getXmlString())
 	end
 end
@@ -1809,7 +1815,7 @@ function Course.createFromXml(vehicle, courseXml, courseKey)
 	local isCompressed = courseXml:getValue(courseKey  .. '#isCompressed')
 	local wasEdited = courseXml:getValue(courseKey  .. '#wasEdited', false)
 	local waypoints = {}
-	if courseXml:hasProperty(courseKey  .. Waypoint.xmlKey) then 
+	if courseXml:hasProperty(courseKey  .. Waypoint.xmlKey) then
 		local d
 		courseXml:iterate(courseKey..Waypoint.xmlKey,function (ix,key)
 			d = CpUtil.getXmlVectorValues(courseXml:getString(key))
@@ -1842,7 +1848,7 @@ function Course.createFromStream(vehicle,streamId, connection)
 	local numWaypoints = streamReadInt32(streamId)
 	local wasEdited = streamReadBool(streamId)
 	local waypoints = {}
-	for ix=1,numWaypoints do 
+	for ix=1,numWaypoints do
 		local d = CpUtil.getXmlVectorValues(streamReadString(streamId))
 		table.insert(waypoints,Waypoint.initFromXmlFile(d,ix))
 	end
