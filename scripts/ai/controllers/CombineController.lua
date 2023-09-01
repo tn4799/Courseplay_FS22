@@ -12,11 +12,11 @@ function CombineController:init(vehicle, combine)
 end
 
 function CombineController:update()
-	if self.settings.useAdditiveFillUnit:getValue() then 
+	if self.settings.useAdditiveFillUnit:getValue() then
 		--- If the silage additive is empty, then stop the driver.
         local additives = self.combineSpec.additives
-        if additives.available then 
-            if self.implement:getFillUnitFillLevelPercentage(additives.fillUnitIndex) <= 0 then 
+        if additives.available then
+            if self.implement:getFillUnitFillLevelPercentage(additives.fillUnitIndex) <= 0 then
 				self:debug("Stopped Cp, as the additive fill unit is empty.")
                 self.vehicle:stopCurrentAIJob(AIMessageErrorOutOfFill.new())
             end
@@ -25,7 +25,7 @@ function CombineController:update()
 end
 
 function CombineController:getDriveData()
-    local maxSpeed = nil 
+    local maxSpeed = nil
     maxSpeed = self:updateThreshingDuringRain()
     self:updateBeaconLightsAndFullMessage()
     return nil, nil, nil, maxSpeed
@@ -36,6 +36,10 @@ function CombineController:getFillLevel()
 end
 
 function CombineController:getFillLevelPercentage()
+    local maxReached = not fillUnit.ignoreFillLimit and g_currentMission.missionInfo.trailerFillLimit and self.combineSpec:getMaxComponentMassReached()
+    if maxReached then
+        return 100
+    end
     return 100 * self.implement:getFillUnitFillLevel(self.combineSpec.fillUnitIndex) /
             self.implement:getFillUnitCapacity(self.combineSpec.fillUnitIndex)
 end
@@ -49,15 +53,15 @@ function CombineController:getFillUnitIndex()
 end
 
 -------------------------------------------------------------
---- Combine 
+--- Combine
 -------------------------------------------------------------
 
 function CombineController:updateThreshingDuringRain()
-    local maxSpeed = nil 
-    if self.implement:getIsThreshingDuringRain() and g_Courseplay.globalSettings.stopThreshingDuringRain:getValue() then 
+    local maxSpeed = nil
+    if self.implement:getIsThreshingDuringRain() and g_Courseplay.globalSettings.stopThreshingDuringRain:getValue() then
         maxSpeed = 0
         self:setInfoText(InfoTextManager.WAITING_FOR_RAIN_TO_FINISH)
-    else 
+    else
         self:clearInfoText(InfoTextManager.WAITING_FOR_RAIN_TO_FINISH)
     end
     return maxSpeed
