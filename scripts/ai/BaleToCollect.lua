@@ -48,7 +48,7 @@ function BaleToCollect.isValidBale(object, baleWrapper, baleLoader, baleWrapType
 		elseif baleLoader and baleLoader.getBaleTypeByBale then
 			local baleType = baleLoader:getBaleTypeByBale(object)
 			local spec = baleLoader.spec_baleLoader
-			if spec and baleType ~= nil then 
+			if spec and baleType ~= nil then
 				local isValid = true
 				--- Avoid bale types, that can't be loaded.
 				if baleType ~= spec.currentBaleType and baleLoader:getFillUnitFillLevel(spec.currentBaleType.fillUnitIndex) ~= 0 then
@@ -58,9 +58,9 @@ function BaleToCollect.isValidBale(object, baleWrapper, baleLoader, baleWrapType
 					return isValid and object.wrappingState > 0, object.wrappingState > 0
 				elseif baleWrapType == CpBaleFinderJobParameters.ONLY_NOT_WRAPPED_BALES then
 					return isValid and object.wrappingState <= 0, object.wrappingState <= 0
-				end	
-				return isValid		
-			end		
+				end
+				return isValid
+			end
 			return false
 		else
 			return true
@@ -136,66 +136,71 @@ function BaleToCollect:getSafeDistance()
 	return math.sqrt(length * length + self.bale.width * self.bale.width) / 2 + 0.2
 end
 
---- This Manager makes sure that bale finders on the same field
---- are not picking the same target bales or trying to load bales 
+--- This Manager makes sure that object finders on the same field
+--- are not picking the same target objects or trying to load objects 
 --- from another autoload trailer, 
---- as these bale are not automatically locked, 
+--- as these objects are not automatically locked, 
 --- like the base game bale collector wagons.  
----@class BaleToCollectManager
-BaleToCollectManager = CpObject()
-BaleToCollectManager.lockTimeOutMs = 500 -- 500 ms
+---@class ObjectToCollectManager
+ObjectToCollectManager = CpObject()
+ObjectToCollectManager.lockTimeOutMs = 500 -- 500 ms
 
-function BaleToCollectManager:init()
-	self.temporarilyLeasedBales = {}
-	self.lockedBales = {}
+function ObjectToCollectManager:init()
+	self.temporarilyLeasedObjects = {}
+	self.lockedObjects = {}
 end
 
-function BaleToCollectManager:update(dt)
-	for bale, time in pairs(self.temporarilyLeasedBales) do 
+function ObjectToCollectManager:update(dt)
+	for bale, time in pairs(self.temporarilyLeasedObjects) do 
 		if time < (g_time + self.lockTimeOutMs) then 
-			self.temporarilyLeasedBales[bale] = nil
+			self.temporarilyLeasedObjects[bale] = nil
 		end
 	end
 end
 
-function BaleToCollectManager:draw()
+function ObjectToCollectManager:draw()
 	
 end
 
 --- Disables the bale object temporarily.
----@param bale table
-function BaleToCollectManager:temporarilyLeaseBale(bale)
-	self.temporarilyLeasedBales[bale] = g_time
+---@param object table
+function ObjectToCollectManager:temporarilyLeaseObject(object)
+	self.temporarilyLeasedObjects[object] = g_time
 end
 
 --- Disables the bale until it is released.
----@param bale table
-function BaleToCollectManager:lockBale(bale, driver)
-	self.lockedBales[bale] = driver
+---@param object table
+function ObjectToCollectManager:lockObject(object, driver)
+	self.lockedObjects[object] = driver
 end
 
----@param bale table
-function BaleToCollectManager:unlockBale(bale)
-	self.lockedBales[bale] = nil
+---@param object table
+function ObjectToCollectManager:unlockObject(object)
+	self.lockedObjects[object] = nil
 end
 
 ---@param driver table
-function BaleToCollectManager:unlockBalesByDriver(driver)
-	for bale, d in pairs(self.lockedBales) do 
+function ObjectToCollectManager:unlockObjectsByDriver(driver)
+	for bale, d in pairs(self.lockedObjects) do 
 		if driver == d then 
-			self.lockedBales[bale] = nil
+			self.lockedObjects[bale] = nil
 		end
 	end
 end
 
---- Is the bale not leased or locked by another driver? 
----@param bale table
-function BaleToCollectManager:isValidBale(bale)
-	return not self.temporarilyLeasedBales[bale] and not self.lockedBales[bale]
+--- Is the object not leased or locked by another driver? 
+---@param object table
+function ObjectToCollectManager:isValidObject(object)
+	return not self.temporarilyLeasedObjects[object] and not self.lockedObjects[object]
 end
 
-function BaleToCollectManager:getBales()
+function ObjectToCollectManager:getBales()
 	return g_currentMission.slotSystem.objectLimits[SlotSystem.LIMITED_OBJECT_BALE].objects
 end
 
-g_baleToCollectManager = BaleToCollectManager()
+function ObjectToCollectManager:getPallets()
+	return g_currentMission.slotSystem.objectLimits[SlotSystem.LIMITED_OBJECT_PALLET].objects
+end
+
+g_baleToCollectManager = ObjectToCollectManager()
+g_palletToCollectManager = ObjectToCollectManager()
